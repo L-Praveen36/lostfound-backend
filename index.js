@@ -10,7 +10,7 @@ const app = express();
 
 // CORS configuration for production
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://your-netlify-app.netlify.app'],
+  origin: ['http://localhost:3000', 'https://lostfound-api.netlify.app'],
   credentials: true
 }));
 
