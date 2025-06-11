@@ -33,19 +33,39 @@ const sendNotification = require("./utils/mailer");
 
 app.post("/api/items", upload.single("image"), async (req, res) => {
   try {
-    const { title, description, location, status, contact } = req.body;
+    const {
+  title,
+  description,
+  category,
+  type,
+  location,
+  date,
+  contactInfo,
+  submittedBy
+} = req.body;
+
     const imageUrl = req.file ? req.file.path : "";
 
     const newItem = new Item({
-      title,
-      description,
-      location,
-      status,
-      contact,
-      image: imageUrl
-    });
+  title,
+  description,
+  category,
+  type,
+  location,
+  date,
+  contact: contactInfo,
+  submittedBy,
+  status: "pending", // if moderation flow
+  image: imageUrl,
+  submittedAt: new Date()
+});
+
 
     await newItem.save();
+
+    if (!title || !description || !location || !type || !contactInfo) {
+  return res.status(400).json({ message: "Missing required fields" });
+}
 
     // 🔔 Check for matches if item is "found"
     if (status === "found") {
