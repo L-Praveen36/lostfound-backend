@@ -53,7 +53,7 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
   type,
   location,
   date,
-  contact: contactInfo,
+  contactInfo,
   submittedBy,
   status: "pending", // if moderation flow
   image: imageUrl,
