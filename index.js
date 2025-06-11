@@ -46,6 +46,11 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
 
     const imageUrl = req.file ? req.file.path : "";
 
+     if (!title || !description || !location || !type || !contactInfo) {
+  return res.status(400).json({ message: "Missing required fields" });
+}
+
+
     const newItem = new Item({
   title,
   description,
@@ -63,12 +68,8 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
 
     await newItem.save();
 
-    if (!title || !description || !location || !type || !contactInfo) {
-  return res.status(400).json({ message: "Missing required fields" });
-}
-
     // 🔔 Check for matches if item is "found"
-    if (status === "found") {
+    if (type === "found") {
       const matchingLostItems = await Item.find({
         status: "lost",
         resolved: { $ne: true },
