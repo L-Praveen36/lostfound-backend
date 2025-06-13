@@ -7,6 +7,9 @@ const mongoose = require("mongoose");
 const Item = require("./models/Item");
 
 const app = express();
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const sendNotification = require("./utils/mailer");
 
 // CORS configuration for production
 app.use(cors({
@@ -28,8 +31,39 @@ app.get("/", (req, res) => {
   res.send("Lost & Found API running!");
 });
 
+// -----------------------------
+// 🔐 Admin Auth Routes
+// -----------------------------
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD_HASH = bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'admin123', 10);
+
+const JWT_SECRET = process.env.JWT_SECRET || "secret123";
+
+app.post('/api/admin/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (username !== ADMIN_USERNAME || !bcrypt.compareSync(password, ADMIN_PASSWORD_HASH)) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+  const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '2h' });
+  res.json({ token });
+});
+
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader?.split(' ')[1];
+  if (!token) return res.status(403).json({ message: 'Token missing' });
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch {
+    return res.status(401).json({ message: 'Invalid or expired token' });
+  }
+};
+
 // POST /api/items - Submit new item
-const sendNotification = require("./utils/mailer");
+
 
 app.post("/api/items", upload.single("image"), async (req, res) => {
   try {
@@ -96,6 +130,7 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
 });
 
 
+
 // GET /api/items - Get approved items only (public)
 app.get("/api/items", async (req, res) => {
   try {
@@ -120,6 +155,15 @@ app.get("/api/items", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+app.get("/api/categories", async (req, res) => {
+  try {
+    const categories = await Item.distinct('category');
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // Admin routes
 app.get("/api/admin/items", async (req, res) => {
@@ -131,7 +175,7 @@ app.get("/api/admin/items", async (req, res) => {
   }
 });
 
-app.put("/api/admin/items/:id/moderate", async (req, res) => {
+app.put("/api/admin/items/:id/moderate",verifyToken, async (req, res) => {
   try {
     const { status, moderatorName } = req.body;
     const item = await Item.findByIdAndUpdate(
@@ -150,7 +194,7 @@ app.put("/api/admin/items/:id/moderate", async (req, res) => {
 });
 
 // Mark item as resolved
-app.put("/api/admin/items/:id/resolve", async (req, res) => {
+app.put("/api/admin/items/:id/resolve",verifyToken,async (req, res) => {
   try {
     const item = await Item.findByIdAndUpdate(
       req.params.id,
@@ -164,7 +208,7 @@ app.put("/api/admin/items/:id/resolve", async (req, res) => {
 });
 
 // Get categories for dropdown
-app.get("/api/categories", async (req, res) => {
+app.get("/api/categories",verifyToken, async (req, res) => {
   try {
     const categories = await Item.distinct('category');
     res.json(categories);
