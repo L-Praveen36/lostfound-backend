@@ -3,7 +3,7 @@ const upload = require("./utils/cloudinary");
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-
+const verifyToken = require('./middlewares/verifyToken');
 const Item = require("./models/Item");
 
 const app = express();
@@ -48,19 +48,6 @@ app.post('/api/admin/login', async (req, res) => {
   res.json({ token });
 });
 
-const verifyToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader?.split(' ')[1];
-  if (!token) return res.status(403).json({ message: 'Token missing' });
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch {
-    return res.status(401).json({ message: 'Invalid or expired token' });
-  }
-};
 
 // POST /api/items - Submit new item
 
