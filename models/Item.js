@@ -20,6 +20,7 @@ const itemSchema = new mongoose.Schema({
   moderatedAt: { type: Date },
   resolved: { type: Boolean, default: false },
   resolvedBy: { type: String, default: null },
+  resolvedAt: { type: Date },
 
   // Keep old fields for backward compatibility
   contact: { type: String }, // Deprecated, use contactInfo

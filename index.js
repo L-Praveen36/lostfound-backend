@@ -188,7 +188,7 @@ app.put("/api/admin/items/:id/resolve", verifyToken, async (req, res) => {
 
     item.resolved = true;
     item.resolvedBy = "Admin"; // clearly marked
-
+     item.resolvedAt = new Date();
     await item.save();
     res.json(item);
   } catch (error) {
@@ -209,6 +209,7 @@ app.put("/api/items/:id/resolve", async (req, res) => {
 
     item.resolved = true;
     item.resolvedBy = email;
+    item.resolvedAt = new Date();
     await item.save();
     res.json({ message: "Item marked as resolved", item });
   } catch (error) {
