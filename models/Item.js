@@ -19,6 +19,8 @@ const itemSchema = new mongoose.Schema({
   moderatedBy: { type: String },
   moderatedAt: { type: Date },
   resolved: { type: Boolean, default: false },
+  resolvedBy: { type: String, default: null },
+
   // Keep old fields for backward compatibility
   contact: { type: String }, // Deprecated, use contactInfo
   image: { type: String }, // Deprecated, use imageUrl

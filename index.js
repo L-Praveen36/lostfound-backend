@@ -181,18 +181,41 @@ app.put("/api/admin/items/:id/moderate",verifyToken, async (req, res) => {
 });
 
 // Mark item as resolved
-app.put("/api/admin/items/:id/resolve",verifyToken,async (req, res) => {
+app.put("/api/admin/items/:id/resolve", verifyToken, async (req, res) => {
   try {
-    const item = await Item.findByIdAndUpdate(
-      req.params.id,
-      { resolved: true },
-      { new: true }
-    );
+    const item = await Item.findById(req.params.id);
+    if (!item) return res.status(404).json({ message: "Item not found" });
+
+    item.resolved = true;
+    item.resolvedBy = "Admin"; // clearly marked
+
+    await item.save();
     res.json(item);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+app.put("/api/items/:id/resolve", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const item = await Item.findById(req.params.id);
+
+    if (!item) return res.status(404).json({ message: "Item not found" });
+
+    // Only allow the person who submitted it to resolve
+    if (item.userEmail !== email) {
+      return res.status(403).json({ message: "Unauthorized to resolve this item" });
+    }
+
+    item.resolved = true;
+    item.resolvedBy = email;
+    await item.save();
+    res.json({ message: "Item marked as resolved", item });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // Get categories for dropdown
 app.get("/api/categories",verifyToken, async (req, res) => {
