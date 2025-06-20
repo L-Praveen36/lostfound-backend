@@ -92,25 +92,36 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
     await newItem.save();
 
     // 🔔 Check for matches if item is "found"
-    if (type === "found") {
-      const matchingLostItems = await Item.find({
-        status: "lost",
-        resolved: { $ne: true },
-        location: { $regex: location, $options: "i" },
-        title: { $regex: title, $options: "i" }
-      });
+    // 🔁 Match LOST with FOUND, and FOUND with LOST
+const matchTargetType = type === "found" ? "lost" : "found";
+const matchingItems = await Item.find({
+  type: matchTargetType,
+  status: "approved", // only matched to approved
+  resolved: { $ne: true },
+  location: { $regex: location, $options: "i" },
+  title: { $regex: title, $options: "i" }
+});
 
-      for (const match of matchingLostItems) {
-        if (match.contactInfo && /\S+@\S+\.\S+/.test(match.contactInfo)) {
-  await sendNotification(
-    match.contactInfo,
-    "🎉 Your Lost Item Might Be Found!",
-    `Someone reported a found item that might match your lost item: "${title}" in "${location}". Please check the Lost & Found portal to verify.`
-  );
+for (const match of matchingItems) {
+  const recipientEmails = [];
+
+  if (match.contactInfo) recipientEmails.push(match.contactInfo);
+  if (match.userEmail) recipientEmails.push(match.userEmail);
+
+  for (const email of recipientEmails) {
+    if (email && /\S+@\S+\.\S+/.test(email)) {
+      await sendNotification(
+        email,
+        "📢 Possible Match Found for Your Item!",
+        `A new item titled "${title}" was submitted in "${location}" which may match your ${
+          matchTargetType === "lost" ? "lost" : "found"
+        } item.\n\nPlease visit the Lost & Found portal to verify.`
+      );
+    }
+  }
 }
 
-      }
-    }
+
 
     res.status(201).json({ message: "Item saved!", item: newItem });
   } catch (err) {
