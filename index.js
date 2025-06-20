@@ -62,7 +62,8 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
   location,
   date,
   contactInfo,
-  submittedBy
+  submittedBy,
+   userEmail
 } = req.body;
 
     const imageUrl = req.file ? req.file.path : "";
@@ -72,7 +73,7 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
 }
 
 
-    const newItem = new Item({
+  const newItem = new Item({
   title,
   description,
   category,
@@ -81,7 +82,8 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
   date,
   contactInfo,
   submittedBy,
-  status: "pending", // if moderation flow
+  userEmail, // ✅ ADD THIS
+  status: "pending",
   image: imageUrl,
   submittedAt: new Date()
 });
@@ -99,13 +101,14 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
       });
 
       for (const match of matchingLostItems) {
-        if (match.contact) {
-          await sendNotification(
-            match.contact,
-            "🎉 Your Lost Item Might Be Found!",
-            `Someone reported a found item that might match your lost item: "${title}" in "${location}". Please check the Lost & Found portal to verify.`
-          );
-        }
+        if (match.contactInfo && /\S+@\S+\.\S+/.test(match.contactInfo)) {
+  await sendNotification(
+    match.contactInfo,
+    "🎉 Your Lost Item Might Be Found!",
+    `Someone reported a found item that might match your lost item: "${title}" in "${location}". Please check the Lost & Found portal to verify.`
+  );
+}
+
       }
     }
 
@@ -129,12 +132,16 @@ app.get("/api/items", async (req, res) => {
     if (category) filter.category = category;
     
     if (search) {
-      filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-        { location: { $regex: search, $options: "i" } }
-      ];
-    }
+  filter.$or = [
+    { title: { $regex: search, $options: "i" } },
+    { description: { $regex: search, $options: "i" } },
+    { location: { $regex: search, $options: "i" } },
+    { userEmail: { $regex: search, $options: "i" } },
+    { submittedBy: { $regex: search, $options: "i" } },
+    { date: { $regex: search, $options: "i" } }
+  ];
+}
+
 
     const items = await Item.find(filter).sort({ submittedAt: -1 });
     res.json(items);
@@ -179,6 +186,17 @@ app.put("/api/admin/items/:id/moderate",verifyToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// DELETE item by admin
+app.delete("/api/admin/items/:id", verifyToken, async (req, res) => {
+  try {
+    const deleted = await Item.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Item not found" });
+    res.json({ message: "Item deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // Mark item as resolved
 app.put("/api/admin/items/:id/resolve", verifyToken, async (req, res) => {
@@ -227,6 +245,7 @@ app.get("/api/categories",verifyToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

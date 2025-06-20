@@ -25,7 +25,8 @@ const itemSchema = new mongoose.Schema({
   // Keep old fields for backward compatibility
   contact: { type: String }, // Deprecated, use contactInfo
   image: { type: String }, // Deprecated, use imageUrl
-  approved: { type: Boolean, default: false } // Deprecated, use status
+  approved: { type: Boolean, default: false } ,// Deprecated, use status
+  userEmail: { type: String },
 });
 
 // Pre-save middleware to handle backward compatibility
