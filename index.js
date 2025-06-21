@@ -55,82 +55,94 @@ app.post('/api/admin/login', async (req, res) => {
 app.post("/api/items", upload.single("image"), async (req, res) => {
   try {
     const {
-  title,
-  description,
-  category,
-  type,
-  location,
-  date,
-  contactInfo,
-  submittedBy,
-   userEmail
-} = req.body;
+      title,
+      description,
+      category,
+      type,
+      location,
+      date,
+      contactInfo,
+      submittedBy,
+      userEmail
+    } = req.body;
 
     const imageUrl = req.file ? req.file.path : "";
 
-     if (!title || !description || !location || !type || !contactInfo) {
-  return res.status(400).json({ message: "Missing required fields" });
-}
+    if (!title || !description || !location || !type || !contactInfo) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
-
-  const newItem = new Item({
-  title,
-  description,
-  category,
-  type,
-  location,
-  date,
-  contactInfo,
-  submittedBy,
-  userEmail, // ✅ ADD THIS
-  status: "pending",
-  image: imageUrl,
-  submittedAt: new Date()
-});
-
+    const newItem = new Item({
+      title,
+      description,
+      category,
+      type,
+      location,
+      date,
+      contactInfo,
+      submittedBy,
+      userEmail,
+      status: "pending",
+      image: imageUrl,
+      submittedAt: new Date()
+    });
 
     await newItem.save();
-
-    // 🔔 Check for matches if item is "found"
-    // 🔁 Match LOST with FOUND, and FOUND with LOST
-const matchTargetType = type === "found" ? "lost" : "found";
-const matchingItems = await Item.find({
-  type: matchTargetType,
-  status: "approved", // only matched to approved
-  resolved: { $ne: true },
-  location: { $regex: location, $options: "i" },
-  title: { $regex: title, $options: "i" }
-});
-
-for (const match of matchingItems) {
-  const recipientEmails = [];
-
-  if (match.contactInfo) recipientEmails.push(match.contactInfo);
-  if (match.userEmail) recipientEmails.push(match.userEmail);
-
-  for (const email of recipientEmails) {
-    if (email && /\S+@\S+\.\S+/.test(email)) {
-      console.log(`📨 Sending match email to: ${email}`); // ✅ Add this
-      await sendNotification(
-        email,
-        "📢 Possible Match Found for Your Item!",
-        `A new item titled "${title}" was submitted in "${location}" which may match your ${
-          matchTargetType === "lost" ? "lost" : "found"
-        } item.\n\nPlease visit the Lost & Found portal to verify.`
-      );
-    } else {
-      console.log(`❌ Invalid email skipped: ${email}`);
-    }
-  }
-}
-
-
-
-
     res.status(201).json({ message: "Item saved!", item: newItem });
   } catch (err) {
     console.error(err);
     res.status(400).json({ error: err.message });
+  }
+});
+app.put("/api/admin/items/:id/moderate", verifyToken, async (req, res) => {
+  try {
+    const { status, moderatorName } = req.body;
+
+    const item = await Item.findByIdAndUpdate(
+      req.params.id,
+      {
+        status,
+        moderatedBy: moderatorName || 'Admin',
+        moderatedAt: new Date()
+      },
+      { new: true }
+    );
+
+    // ✅ Only proceed with email if approved
+    if (status === "approved") {
+      const matchTargetType = item.type === "found" ? "lost" : "found";
+
+      const matchingItems = await Item.find({
+        type: matchTargetType,
+        status: "approved",
+        resolved: { $ne: true },
+        location: { $regex: item.location, $options: "i" },
+        title: { $regex: item.title, $options: "i" }
+      });
+
+      for (const match of matchingItems) {
+        const recipientEmails = [];
+
+        if (match.contactInfo) recipientEmails.push(match.contactInfo);
+        if (match.userEmail) recipientEmails.push(match.userEmail);
+
+        for (const email of recipientEmails) {
+          if (email && /\S+@\S+\.\S+/.test(email)) {
+            console.log(`📨 Sending match email to: ${email}`);
+            await sendNotification(
+              email,
+              "📢 Possible Match Found for Your Item!",
+              `An item titled "${item.title}" in "${item.location}" has been approved and might match your ${matchTargetType} item.\n\nVisit the Lost & Found portal to verify.`
+            );
+          }
+        }
+      }
+    }
+
+    res.json(item);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -204,23 +216,7 @@ app.get("/api/admin/items", async (req, res) => {
   }
 });
 
-app.put("/api/admin/items/:id/moderate",verifyToken, async (req, res) => {
-  try {
-    const { status, moderatorName } = req.body;
-    const item = await Item.findByIdAndUpdate(
-      req.params.id,
-      {
-        status,
-        moderatedBy: moderatorName || 'Admin',
-        moderatedAt: new Date()
-      },
-      { new: true }
-    );
-    res.json(item);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+
 // DELETE item by admin
 app.delete("/api/admin/items/:id", verifyToken, async (req, res) => {
   try {
