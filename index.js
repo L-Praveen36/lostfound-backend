@@ -110,34 +110,46 @@ app.put("/api/admin/items/:id/moderate", verifyToken, async (req, res) => {
 
     // ✅ Only proceed with email if approved
     if (status === "approved") {
-      const matchTargetType = item.type === "found" ? "lost" : "found";
+  const matchTargetType = item.type === "found" ? "lost" : "found";
 
-      const matchingItems = await Item.find({
-        type: matchTargetType,
-        status: "approved",
-        resolved: { $ne: true },
-        location: { $regex: item.location, $options: "i" },
-        title: { $regex: item.title, $options: "i" }
-      });
+  const matchingItems = await Item.find({
+    type: matchTargetType,
+    status: "approved",
+    resolved: { $ne: true },
+    location: { $regex: item.location, $options: "i" },
+    title: { $regex: item.title, $options: "i" }
+  });
 
-      for (const match of matchingItems) {
-        const recipientEmails = [];
+  for (const match of matchingItems) {
+    const recipientEmails = [];
 
-        if (match.contactInfo) recipientEmails.push(match.contactInfo);
-        if (match.userEmail) recipientEmails.push(match.userEmail);
+    if (match.contactInfo) recipientEmails.push(match.contactInfo);
+    if (match.userEmail) recipientEmails.push(match.userEmail);
 
-        for (const email of recipientEmails) {
-          if (email && /\S+@\S+\.\S+/.test(email)) {
-            console.log(`📨 Sending match email to: ${email}`);
-            await sendNotification(
-              email,
-              "📢 Possible Match Found for Your Item!",
-              `An item titled "${item.title}" in "${item.location}" has been approved and might match your ${matchTargetType} item.\n\nVisit the Lost & Found portal to verify.`
-            );
-          }
-        }
+    // ✅ Compose cleaner message
+    const body = `
+Hi there,
+
+We’ve found an item titled "${item.title}" in "${item.location}" that may match something you reported as ${matchTargetType}.
+
+Please visit the Lost & Found portal to verify the details.
+
+Thanks,  
+Lost & Found Team
+`;
+
+    for (const email of recipientEmails) {
+      if (email && /\S+@\S+\.\S+/.test(email)) {
+        console.log(`📨 Sending match email to: ${email}`);
+        await sendNotification(
+          email,
+          "🔔 Possible Match Found for Your Item!",
+          body // ✅ Use clean message body here
+        );
       }
     }
+  }
+}
 
     res.json(item);
   } catch (error) {
