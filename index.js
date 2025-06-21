@@ -110,6 +110,7 @@ for (const match of matchingItems) {
 
   for (const email of recipientEmails) {
     if (email && /\S+@\S+\.\S+/.test(email)) {
+      console.log(`📨 Sending match email to: ${email}`); // ✅ Add this
       await sendNotification(
         email,
         "📢 Possible Match Found for Your Item!",
@@ -117,9 +118,12 @@ for (const match of matchingItems) {
           matchTargetType === "lost" ? "lost" : "found"
         } item.\n\nPlease visit the Lost & Found portal to verify.`
       );
+    } else {
+      console.log(`❌ Invalid email skipped: ${email}`);
     }
   }
 }
+
 
 
 
@@ -135,23 +139,41 @@ for (const match of matchingItems) {
 // GET /api/items - Get approved items only (public)
 app.get("/api/items", async (req, res) => {
   try {
-    const { type, location, category, search } = req.query;
+    const { type, location, category, search, userEmail } = req.query;
     let filter = { status: 'approved' }; // Only show approved items
 
     if (type) filter.type = type;
     if (location) filter.location = { $regex: location, $options: "i" };
     if (category) filter.category = category;
     
-    if (search) {
+    if (search && userEmail) {
+  filter = {
+    $and: [
+      { userEmail: userEmail },
+      {
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+          { location: { $regex: search, $options: "i" } },
+          { userEmail: { $regex: search, $options: "i" } },
+          { submittedBy: { $regex: search, $options: "i" } }
+        ]
+      }
+    ]
+  };
+} else if (search) {
   filter.$or = [
     { title: { $regex: search, $options: "i" } },
     { description: { $regex: search, $options: "i" } },
     { location: { $regex: search, $options: "i" } },
     { userEmail: { $regex: search, $options: "i" } },
-    { submittedBy: { $regex: search, $options: "i" } },
-    { date: { $regex: search, $options: "i" } }
+    { submittedBy: { $regex: search, $options: "i" } }
   ];
+} else if (userEmail) {
+  filter.userEmail = userEmail;
 }
+
+
 
 
     const items = await Item.find(filter).sort({ submittedAt: -1 });
@@ -159,6 +181,8 @@ app.get("/api/items", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+  console.log("🧾 Submission complete. New item:", newItem);
+
 });
 app.get("/api/categories", async (req, res) => {
   try {

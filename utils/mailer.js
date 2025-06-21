@@ -30,6 +30,7 @@ const sendNotification = async (to, subject, text) => {
   } catch (err) {
     console.error(`❌ Failed to send email to ${to}:`, err.message);
   }
+
 };
 
 module.exports = sendNotification;
