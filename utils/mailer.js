@@ -35,7 +35,7 @@ const sendNotification = async (to, subject, text) => {
     const info = await transporter.sendMail({
       from: `"Lost & Found Alerts" <lunavathpraveen36@gmail.com>`,
       to,
-      subject: "🔔 Lost & Found Match Notification",
+      subject: "Lost & Found Match Notification",
       text
     });
 
