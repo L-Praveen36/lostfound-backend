@@ -1,3 +1,4 @@
+//backend/index.js
 require("dotenv").config();
 const upload = require("./utils/cloudinary");
 const express = require("express");
@@ -52,25 +53,23 @@ app.post('/api/admin/login', async (req, res) => {
 // POST /api/items - Submit new item
 
 
-app.post("/api/items", upload.single("image"), async (req, res) => {
+app.post("/api/items", upload.array("images", 4), async (req, res) => {
   try {
-    const {
-      title,
-      description,
-      category,
-      type,
-      location,
-      date,
-      contactInfo,
-      submittedBy,
-      userEmail
-    } = req.body;
+    const { title, description, category, type, location, date, contactInfo, submittedBy, userEmail } = req.body;
 
-    const imageUrl = req.file ? req.file.path : "";
-
-    if (!title || !description || !location || !type || !contactInfo) {
+    if (!title || !description || !location || !type || !contactInfo || !submittedBy || !userEmail) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+
+    if (!['lost', 'found'].includes(type)) {
+      return res.status(400).json({ message: "Invalid item type" });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "At least one image is required" });
+    }
+
+    const imageUrls = req.files.map(file => file.path);
 
     const newItem = new Item({
       title,
@@ -83,17 +82,30 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
       submittedBy,
       userEmail,
       status: "pending",
-      image: imageUrl,
+      imageUrl: imageUrls[0], // main image
+      images: imageUrls,       // optional array field
       submittedAt: new Date()
     });
 
     await newItem.save();
-    res.status(201).json({ message: "Item saved!", item: newItem });
+
+    await sendNotification(userEmail, "Lost & Found Submission Received", `
+Hi ${submittedBy},
+
+We've received your ${type} item submission: "${title}" at ${location}.
+You'll be notified once it is reviewed.
+
+Thanks,
+Lost & Found Team
+    `);
+
+    res.status(201).json({ message: "Item submitted successfully", item: newItem });
   } catch (err) {
     console.error(err);
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
+
 app.put("/api/admin/items/:id/moderate", verifyToken, async (req, res) => {
   try {
     const { status, moderatorName } = req.body;
