@@ -53,7 +53,7 @@ app.post('/api/admin/login', async (req, res) => {
 // POST /api/items - Submit new item
 
 
-app.post("/api/items", upload.array("images", 4), async (req, res) => {
+app.post("/api/items", upload.array("images", 5), async (req, res) => {
   try {
     const { title, description, category, type, location, date, contactInfo, submittedBy, userEmail } = req.body;
 
@@ -65,11 +65,10 @@ app.post("/api/items", upload.array("images", 4), async (req, res) => {
       return res.status(400).json({ message: "Invalid item type" });
     }
 
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "At least one image is required" });
-    }
 
-    const imageUrls = req.files.map(file => file.path);
+
+    const imageUrls = req.files?.map(file => file.path) || [];
+
 
     const newItem = new Item({
       title,
@@ -82,7 +81,7 @@ app.post("/api/items", upload.array("images", 4), async (req, res) => {
       submittedBy,
       userEmail,
       status: "pending",
-      imageUrl: imageUrls[0], // main image
+       imageUrl: imageUrls[0] || "", // main image
       images: imageUrls,       // optional array field
       submittedAt: new Date()
     });
