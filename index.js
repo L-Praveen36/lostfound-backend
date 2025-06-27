@@ -295,10 +295,10 @@ app.put("/api/items/:id/resolve", async (req, res) => {
 // Claiming an item as a user (mark as resolved)
 app.put("/api/items/:id/claim", async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, rollNo } = req.body;
 
-    if (!name || !email) {
-      return res.status(400).json({ message: "Name and email are required" });
+    if (!name || !email || !rollNo) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
     const item = await Item.findById(req.params.id);
@@ -307,17 +307,18 @@ app.put("/api/items/:id/claim", async (req, res) => {
     if (item.resolved) return res.status(400).json({ message: "Item already resolved" });
 
     item.resolved = true;
-    item.resolvedBy = name || email;
     item.resolvedAt = new Date();
+    item.resolvedBy = `${name} (${rollNo})`;
+    item.claimedInfo = { name, email, rollNo };
 
     await item.save();
-
-    return res.json({ message: "Item successfully claimed and marked as resolved", item });
+    res.json({ message: "Item successfully claimed and marked as resolved", item });
   } catch (err) {
     console.error("Claim error:", err.message);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 // Get categories for dropdown
 app.get("/api/categories",verifyToken, async (req, res) => {
