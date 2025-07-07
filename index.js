@@ -233,7 +233,8 @@ app.get("/api/categories", async (req, res) => {
 
 
 // Admin routes
-app.get("/api/admin/items", async (req, res) => {
+app.get("/api/admin/items", verifyToken, async (req, res) => {
+
   try {
     const items = await Item.find().sort({ submittedAt: -1 });
     res.json(items);
