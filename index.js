@@ -219,7 +219,7 @@ app.get("/api/items", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-  console.log("🧾 Submission complete. New item:", newItem);
+
 
 });
 app.get("/api/categories", async (req, res) => {

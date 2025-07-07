@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader?.split(' ')[1]; // Expected: Bearer <token>
+  const token = authHeader?.split(' ')[1]; // Bearer <token>
 
   if (!token) {
     return res.status(403).json({ message: 'Token missing' });
@@ -17,8 +17,4 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// ✅ Make sure this is at the bottom and after the function declaration:
 module.exports = verifyToken;
-
-
-
