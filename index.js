@@ -128,13 +128,14 @@ app.put("/api/admin/items/:id/moderate", verifyToken, async (req, res) => {
     if (status === "approved") {
   const matchTargetType = item.type === "found" ? "lost" : "found";
 
-  const matchingItems = await Item.find({
-    type: matchTargetType,
-    status: "approved",
-    resolved: { $ne: true },
-    location: { $regex: item.location, $options: "i" },
-    title: { $regex: item.title, $options: "i" }
-  });
+// Remove location filter — match based on partial title (case-insensitive)
+const matchingItems = await Item.find({
+  type: matchTargetType,
+  status: "approved",
+  resolved: { $ne: true },
+  title: { $regex: item.title, $options: "i" } // partial & case-insensitive match
+});
+
 
   for (const match of matchingItems) {
     const recipientEmails = [];
