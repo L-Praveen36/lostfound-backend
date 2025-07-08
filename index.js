@@ -281,20 +281,22 @@ app.put("/api/items/:id/resolve", async (req, res) => {
 
     if (!item) return res.status(404).json({ message: "Item not found" });
 
-    // Only allow the person who submitted it to resolve
+    // Check ownership
     if (item.userEmail !== email) {
       return res.status(403).json({ message: "Unauthorized to resolve this item" });
     }
 
     item.resolved = true;
-    item.resolvedBy = email;
+    item.resolvedBy = "user"; // ✅ For admin panel display
     item.resolvedAt = new Date();
+
     await item.save();
     res.json({ message: "Item marked as resolved", item });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // Claiming an item as a user (mark as resolved)
 app.put("/api/items/:id/claim", async (req, res) => {
