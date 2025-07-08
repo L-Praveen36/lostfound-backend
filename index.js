@@ -73,9 +73,9 @@ app.post('/api/admin/login', async (req, res) => {
 
 app.post("/api/items", upload.array("images", 5), async (req, res) => {
   try {
-    const { title, description, category, type, location, date, contactInfo, submittedBy, userEmail,studentId, phone} = req.body;
+    const { title, description, category, type, location, date,  submittedBy, userEmail,studentId, phone} = req.body;
 
-    if (!title || !description || !location || !type || !contactInfo || !submittedBy || !userEmail) {
+    if (!title || !description || !location || !type || !submittedBy || !userEmail) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -96,7 +96,6 @@ app.post("/api/items", upload.array("images", 5), async (req, res) => {
       type,
       location,
       date,
-      contactInfo :contactEmail,
       submittedBy,
       userEmail,
       phone,
@@ -156,7 +155,7 @@ const matchingItems = await Item.find({
   for (const match of matchingItems) {
     const recipientEmails = [];
 
-    if (match.contactInfo) recipientEmails.push(match.contactInfo);
+
     if (match.userEmail) recipientEmails.push(match.userEmail);
 
     // ✅ Compose cleaner message
