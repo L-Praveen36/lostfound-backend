@@ -86,9 +86,7 @@ app.post("/api/items", upload.array("images", 5), async (req, res) => {
 
 
     const imageUrls = req.files?.map(file => file.path) || [];
-    const contactEmail = contactInfo && /\S+@\S+\.\S+/.test(contactInfo)
-  ? contactInfo
-  : userEmail;
+    
 
 
     const newItem = new Item({
