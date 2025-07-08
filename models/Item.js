@@ -29,6 +29,7 @@ const itemSchema = new mongoose.Schema({
   image: { type: String }, // Deprecated, use imageUrl
   approved: { type: Boolean, default: false } ,// Deprecated, use status
   userEmail: { type: String },
+  phone: { type: String },
   claimedInfo: {
   name: { type: String },
   email: { type: String },

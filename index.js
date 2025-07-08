@@ -55,7 +55,7 @@ app.post('/api/admin/login', async (req, res) => {
 
 app.post("/api/items", upload.array("images", 5), async (req, res) => {
   try {
-    const { title, description, category, type, location, date, contactInfo, submittedBy, userEmail } = req.body;
+    const { title, description, category, type, location, date, contactInfo, submittedBy, userEmail,studentId, phone} = req.body;
 
     if (!title || !description || !location || !type || !contactInfo || !submittedBy || !userEmail) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -83,6 +83,8 @@ app.post("/api/items", upload.array("images", 5), async (req, res) => {
       contactInfo :contactEmail,
       submittedBy,
       userEmail,
+      phone,
+      schoolId: studentId,
       status: "pending",
        imageUrl: imageUrls[0] || "", // main image
       images: imageUrls,       // optional array field
