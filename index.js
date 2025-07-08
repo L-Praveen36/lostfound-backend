@@ -11,24 +11,19 @@ const app = express();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const sendNotification = require("./utils/mailer");
+const allowedOrigins = ['http://localhost:3000', 'https://lostfound-api.netlify.app'];
 
 // CORS configuration for production
 // ✅ FIXED
 app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'https://lostfound-api.netlify.app'
-    ];
+  origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+      callback(null, true); // ✅ Allow the request
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error('Not allowed by CORS')); // ❌ Block disallowed origins
     }
   },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  credentials: true
 }));
 app.use(( res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://lostfound-api.netlify.app');
