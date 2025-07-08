@@ -73,7 +73,7 @@ app.post('/api/admin/login', async (req, res) => {
 
 app.post("/api/items", upload.array("images", 5), async (req, res) => {
   try {
-    const { title, description, category, type, location, date,  submittedBy, userEmail,studentId, phone} = req.body;
+    const { title, description, category, type, location, date, contactInfo, submittedBy, userEmail,studentId, phone} = req.body;
 
     if (!title || !description || !location || !type || !submittedBy || !userEmail) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -82,6 +82,9 @@ app.post("/api/items", upload.array("images", 5), async (req, res) => {
     if (!['lost', 'found'].includes(type)) {
       return res.status(400).json({ message: "Invalid item type" });
     }
+
+
+    const contact = contactInfo && /\S+@\S+\.\S+/.test(contactInfo) ? contactInfo : userEmail;
 
 
 
@@ -99,7 +102,7 @@ app.post("/api/items", upload.array("images", 5), async (req, res) => {
       submittedBy,
       userEmail,
       phone,
-      contactInfo: phone,
+      contactInfo: contact,
       schoolId: studentId,
       status: "pending",
        imageUrl: imageUrls[0] || "", // main image
