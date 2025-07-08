@@ -9,6 +9,7 @@ const itemSchema = new mongoose.Schema({
   location: { type: String, required: true },
   date: { type: Date, required: true },
   contactInfo: { type: String, required: true },
+
   schoolId: { type: String }, // Changed from 'contact'
   imageUrl: { type: String }, // Changed from 'image'
   status: { 

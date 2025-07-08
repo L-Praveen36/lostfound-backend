@@ -99,6 +99,7 @@ app.post("/api/items", upload.array("images", 5), async (req, res) => {
       submittedBy,
       userEmail,
       phone,
+      contactInfo: phone,
       schoolId: studentId,
       status: "pending",
        imageUrl: imageUrls[0] || "", // main image
