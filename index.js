@@ -49,6 +49,9 @@ mongoose.connect(process.env.MONGO_URI, {
 app.get("/", (req, res) => {
   res.send("Lost & Found API running!");
 });
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // -----------------------------
 // 🔐 Admin Auth Routes
@@ -358,3 +361,11 @@ app.get("/api/categories",verifyToken, async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+process.on('unhandledRejection', (err) => {
+  console.error('⚠️ Unhandled Promise Rejection:', err.message);
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('🚨 MongoDB Error:', err.message);
+});
