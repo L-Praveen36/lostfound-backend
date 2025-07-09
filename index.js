@@ -87,7 +87,7 @@ app.post("/api/items", upload.array("images", 5), async (req, res) => {
     }
 
 
-    const contact = contactInfo && /\S+@\S+\.\S+/.test(contactInfo) ? contactInfo : userEmail;
+    
 
 
 
@@ -105,7 +105,7 @@ app.post("/api/items", upload.array("images", 5), async (req, res) => {
       submittedBy,
       userEmail,
       phone,
-      contactInfo: contact,
+      contactInfo,
       schoolId: studentId,
       status: "pending",
        imageUrl: imageUrls[0] || "", // main image
