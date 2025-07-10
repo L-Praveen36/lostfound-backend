@@ -319,33 +319,37 @@ app.put("/api/items/:id/resolve", async (req, res) => {
   }
 });
 
-
-// Claiming an item as a user (mark as resolved)
-app.put("/api/items/:id/claim", async (req, res) => {
+app.put("/api/admin/items/:id/found-by-security", verifyToken, async (req, res) => {
   try {
-    const { name, email, rollNo } = req.body;
-
-    if (!name || !email || !rollNo) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
+    const { foundBySecurity, securityNote } = req.body;
     const item = await Item.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Item not found" });
 
-    if (item.resolved) return res.status(400).json({ message: "Item already resolved" });
-
-    item.resolved = true;
-    item.resolvedAt = new Date();
-    item.resolvedBy = `${name} (${rollNo})`;
-    item.claimedInfo = { name, email, rollNo };
-
+    item.foundBySecurity = foundBySecurity;
+    item.securityNote = securityNote || "";
     await item.save();
-    res.json({ message: "Item successfully claimed and marked as resolved", item });
+
+    // Send email to user
+    if (foundBySecurity && item.userEmail) {
+      await sendNotification(item.userEmail, "Your Lost Item Was Found!",
+        `Hi ${item.submittedBy},
+
+Good news! The item you reported as lost ("${item.title}") has been found and is now available at the security office.
+
+Please visit the security desk to collect your item.
+
+Thanks,  
+Lost & Found Team`);
+    }
+
+    res.json({ message: "Item updated", item });
   } catch (err) {
-    console.error("Claim error:", err.message);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error: err.message });
   }
 });
+
+// Claiming an item as a user (mark as resolved)
+
 
 
 // Get categories for dropdown

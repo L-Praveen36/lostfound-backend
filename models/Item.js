@@ -17,6 +17,14 @@ const itemSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'rejected'], 
     default: 'pending' 
   },
+  foundBySecurity: {
+  type: Boolean,
+  default: false
+},
+securityNote: { // Optional note
+  type: String
+},
+
   submittedBy: { type: String, required: true },
   submittedAt: { type: Date, default: Date.now },
   moderatedBy: { type: String },
