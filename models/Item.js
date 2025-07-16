@@ -14,7 +14,7 @@ const itemSchema = new mongoose.Schema({
   type: { type: String, enum: ['lost', 'found'], required: true },
   location: { type: String, required: true },
   date: { type: Date, required: true },
-  contactInfo: { type: String, required: true },
+  contactInfo: { type: String },
   schoolId: { type: String },
   imageUrl: { type: String },
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
