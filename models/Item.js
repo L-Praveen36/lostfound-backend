@@ -1,30 +1,25 @@
-//models/item.js
 const mongoose = require("mongoose");
+
+const claimSchema = new mongoose.Schema({
+  rollNo: { type: String, required: true },
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  claimedAt: { type: Date, default: Date.now }
+});
 
 const itemSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   category: { type: String, required: true, default: 'Other' },
-  type: { type: String, enum: ['lost', 'found'], required: true }, // Changed from 'status'
+  type: { type: String, enum: ['lost', 'found'], required: true },
   location: { type: String, required: true },
   date: { type: Date, required: true },
   contactInfo: { type: String, required: true },
-
-  schoolId: { type: String }, // Changed from 'contact'
-  imageUrl: { type: String }, // Changed from 'image'
-  status: { 
-    type: String, 
-    enum: ['pending', 'approved', 'rejected'], 
-    default: 'pending' 
-  },
-  foundBySecurity: {
-  type: Boolean,
-  default: false
-},
-securityNote: { // Optional note
-  type: String
-},
-
+  schoolId: { type: String },
+  imageUrl: { type: String },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  foundBySecurity: { type: Boolean, default: false },
+  securityNote: { type: String },
   submittedBy: { type: String, required: true },
   submittedAt: { type: Date, default: Date.now },
   moderatedBy: { type: String },
@@ -32,24 +27,19 @@ securityNote: { // Optional note
   resolved: { type: Boolean, default: false },
   resolvedBy: { type: String, default: null },
   resolvedAt: { type: Date },
-
-  // Keep old fields for backward compatibility
-  contact: { type: String }, // Deprecated, use contactInfo
-  image: { type: String }, // Deprecated, use imageUrl
-  approved: { type: Boolean, default: false } ,// Deprecated, use status
   userEmail: { type: String },
   phone: { type: String },
-  claimedInfo: {
-  name: { type: String },
-  email: { type: String },
-  rollNo: { type: String },
-  }
 
+  // ✅ New claims array
+  claims: [claimSchema],
+
+  // Deprecated fields for backward compatibility
+  contact: { type: String },
+  image: { type: String },
+  approved: { type: Boolean, default: false },
 });
 
-// Pre-save middleware to handle backward compatibility
-itemSchema.pre('save', function(next) {
-  // Map old fields to new fields if they exist
+itemSchema.pre('save', function (next) {
   if (this.contact && !this.contactInfo) {
     this.contactInfo = this.contact;
   }

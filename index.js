@@ -350,6 +350,40 @@ Lost & Found Team`);
 
 // Claiming an item as a user (mark as resolved)
 
+app.put("/api/items/:id/claim", async (req, res) => {
+  try {
+    const { rollNo, name, email } = req.body;
+    const item = await Item.findById(req.params.id);
+    if (!item) return res.status(404).json({ message: "Item not found" });
+
+    if (!item.claims) item.claims = [];
+
+    item.claims.push({
+      rollNo,
+      name,
+      email,
+      claimedAt: new Date()
+    });
+
+    await item.save();
+
+    // Send confirmation mail
+    await sendNotification(email, "Claim Request Submitted", `
+Hi ${name},
+
+Your claim for the item "${item.title}" has been received.
+Please visit the security office to complete the collection process.
+
+Thanks,  
+Lost & Found Team
+    `);
+
+    res.json({ message: "Claim submitted successfully" });
+  } catch (err) {
+    console.error("Claim error:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
 
 
 // Get categories for dropdown
