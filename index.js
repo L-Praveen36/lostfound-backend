@@ -21,6 +21,7 @@ const allowedOrigins = [
   "https://lostfound-api.netlify.app",  // your Netlify frontend domain
 ];
 
+
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -34,12 +35,10 @@ app.use(
   })
 );
 
+app.use(express.json());
 app.use('/api/auth', authRoutes); // ✅ Mount OTP auth routes
 
 
-
-
-app.use(express.json());
 console.log("DEBUG MONGO_URI:", process.env.MONGO_URI);
 
 mongoose.connect(process.env.MONGO_URI, {
