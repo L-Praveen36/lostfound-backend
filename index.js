@@ -6,6 +6,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const verifyToken = require('./middlewares/verifyToken');
 const Item = require("./models/Item");
+const authRoutes = require('./routes/authRoutes'); // ✅ Add this
 
 const app = express();
 const jwt = require('jsonwebtoken');
@@ -33,6 +34,7 @@ app.use(
   })
 );
 
+app.use('/api/auth', authRoutes); // ✅ Mount OTP auth routes
 
 
 
