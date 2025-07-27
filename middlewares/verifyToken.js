@@ -1,20 +1,23 @@
-const jwt = require('jsonwebtoken');
+// middleware/verifyFirebaseToken.js
+const admin = require("../firebaseAdmin");
 
-const verifyToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader?.split(' ')[1]; // Bearer <token>
+const verifyFirebaseToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-  if (!token) {
-    return res.status(403).json({ message: 'Token missing' });
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "No token provided" });
   }
 
+  const token = authHeader.split("Bearer ")[1];
+
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
-    req.user = decoded;
+    const decoded = await admin.auth().verifyIdToken(token);
+    req.user = decoded; // contains uid, email, etc.
     next();
   } catch (err) {
-    return res.status(401).json({ message: 'Invalid or expired token' });
+    console.error("Firebase token verification failed:", err);
+    res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
-module.exports = verifyToken;
+module.exports = verifyFirebaseToken;

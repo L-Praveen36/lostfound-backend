@@ -4,9 +4,10 @@ const upload = require("./utils/cloudinary");
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const verifyToken = require('./middlewares/verifyToken');
+const verifyFirebaseToken = require('./middlewares/verifyFirebaseToken');
+const reportRoutes = require("./routes/report");
 const Item = require("./models/Item");
-const authRoutes = require('./routes/authRoutes'); // ✅ Add this
+
 
 const app = express();
 const jwt = require('jsonwebtoken');
@@ -36,7 +37,7 @@ app.use(
 );
 
 app.use(express.json());
-app.use('/api/auth', authRoutes); // ✅ Mount OTP auth routes
+app.use("/api/auth", reportRoutes);
 
 
 console.log("DEBUG MONGO_URI:", process.env.MONGO_URI);
@@ -134,7 +135,7 @@ Lost & Found Team
   }
 });
 
-app.put("/api/admin/items/:id/moderate", verifyToken, async (req, res) => {
+app.put("/api/admin/items/:id/moderate", verifyFirebaseToken, async (req, res) => {
   try {
     const { status, moderatorName } = req.body;
 
@@ -260,7 +261,7 @@ app.get("/api/categories", async (req, res) => {
 
 
 // Admin routes
-app.get("/api/admin/items", verifyToken, async (req, res) => {
+app.get("/api/admin/items", verifyFirebaseToken, async (req, res) => {
 
   try {
     const items = await Item.find().sort({ submittedAt: -1 });
@@ -272,7 +273,7 @@ app.get("/api/admin/items", verifyToken, async (req, res) => {
 
 
 // DELETE item by admin
-app.delete("/api/admin/items/:id", verifyToken, async (req, res) => {
+app.delete("/api/admin/items/:id", verifyFirebaseToken, async (req, res) => {
   try {
     const deleted = await Item.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: "Item not found" });
@@ -284,7 +285,7 @@ app.delete("/api/admin/items/:id", verifyToken, async (req, res) => {
 
 
 // Mark item as resolved
-app.put("/api/admin/items/:id/resolve", verifyToken, async (req, res) => {
+app.put("/api/admin/items/:id/resolve", verifyFirebaseToken, async (req, res) => {
   try {
     const item = await Item.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Item not found" });
@@ -321,7 +322,7 @@ app.put("/api/items/:id/resolve", async (req, res) => {
   }
 });
 
-app.put("/api/admin/items/:id/found-by-security", verifyToken, async (req, res) => {
+app.put("/api/admin/items/:id/found-by-security", verifyFirebaseToken, async (req, res) => {
   try {
     const { foundBySecurity, securityNote } = req.body;
     const item = await Item.findById(req.params.id);
@@ -389,7 +390,7 @@ Lost & Found Team
 
 
 // Get categories for dropdown
-app.get("/api/categories",verifyToken, async (req, res) => {
+app.get("/api/categories",verifyFirebaseToken, async (req, res) => {
   try {
     const categories = await Item.distinct('category');
     res.json(categories);
