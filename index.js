@@ -8,7 +8,7 @@ const verifyFirebaseToken = require('./middlewares/verifyFirebaseToken');
 const reportRoutes = require("./routes/report");
 const Item = require("./models/Item");
 
-
+const authRoutes = require("./routes/auth");
 const app = express();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -38,7 +38,7 @@ app.use(
 
 app.use(express.json());
 app.use("/api/auth", reportRoutes);
-
+app.use("/api/auth", authRoutes);
 
 console.log("DEBUG MONGO_URI:", process.env.MONGO_URI);
 
