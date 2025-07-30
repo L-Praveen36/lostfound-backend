@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const verifyFirebaseToken = require('./middlewares/verifyFirebaseToken');
 const reportRoutes = require("./routes/report");
 const Item = require("./models/Item");
+const verifyAdminToken = require('./middlewares/verifyAdminToken');
 
 const authRoutes = require("./routes/auth");
 const app = express();
@@ -135,7 +136,7 @@ Lost & Found Team
   }
 });
 
-app.put("/api/admin/items/:id/moderate", verifyFirebaseToken, async (req, res) => {
+app.put("/api/admin/items/:id/moderate", verifyAdminToken, async (req, res) => {
   try {
     const { status, moderatorName } = req.body;
 
@@ -261,7 +262,7 @@ app.get("/api/categories", async (req, res) => {
 
 
 // Admin routes
-app.get("/api/admin/items", verifyFirebaseToken, async (req, res) => {
+app.get("/api/admin/items", verifyAdminToken, async (req, res) => {
 
   try {
     const items = await Item.find().sort({ submittedAt: -1 });
@@ -273,7 +274,7 @@ app.get("/api/admin/items", verifyFirebaseToken, async (req, res) => {
 
 
 // DELETE item by admin
-app.delete("/api/admin/items/:id", verifyFirebaseToken, async (req, res) => {
+app.delete("/api/admin/items/:id", verifyAdminToken, async (req, res) => {
   try {
     const deleted = await Item.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: "Item not found" });
@@ -285,7 +286,7 @@ app.delete("/api/admin/items/:id", verifyFirebaseToken, async (req, res) => {
 
 
 // Mark item as resolved
-app.put("/api/admin/items/:id/resolve", verifyFirebaseToken, async (req, res) => {
+app.put("/api/admin/items/:id/resolve", verifyAdminToken, async (req, res) => {
   try {
     const item = await Item.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Item not found" });
@@ -322,7 +323,7 @@ app.put("/api/items/:id/resolve", async (req, res) => {
   }
 });
 
-app.put("/api/admin/items/:id/found-by-security", verifyFirebaseToken, async (req, res) => {
+app.put("/api/admin/items/:id/found-by-security", verifyAdminToken, async (req, res) => {
   try {
     const { foundBySecurity, securityNote } = req.body;
     const item = await Item.findById(req.params.id);
