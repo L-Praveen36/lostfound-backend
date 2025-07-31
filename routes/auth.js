@@ -87,19 +87,37 @@ router.post("/send-otp", async (req, res) => {
 
 router.post("/resend-otp", async (req, res) => {
   const { email } = req.body;
+  if (!email) return res.status(400).json({ message: "Email is required" });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
 
   try {
-    // Optional: rate limit by IP/email/session
-    const otp = generateOtp(); // Your logic
-    await saveOtpToDB(email, otp); // Update DB or memory
-    await sendOtpEmail(email, otp); // Your email sending logic
+    await Otp.findOneAndDelete({ email }); // remove any previous OTP
+    await Otp.create({ email, otp, expiresAt });
 
-    res.status(200).json({ message: "OTP sent" });
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"Lost & Found" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Your OTP Code",
+      text: `Your verification code is: ${otp}`,
+    });
+
+    res.status(200).json({ message: "OTP resent" });
   } catch (err) {
     console.error("Failed to resend OTP:", err);
     res.status(500).json({ message: "Could not resend OTP" });
   }
 });
+
 
 // ✅ Verify OTP
 router.post("/verify-otp", async (req, res) => {
