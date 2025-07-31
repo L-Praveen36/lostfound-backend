@@ -13,19 +13,21 @@ router.post("/check-email", async (req, res) => {
 
   try {
     const user = await admin.auth().getUserByEmail(email);
-    const provider = user.providerData[0]?.providerId;
+    const providers = user.providerData.map(p => p.providerId);
+    const hasPassword = providers.includes("password");
 
-    if (provider === "password") {
-      res.json({ exists: true, provider: "password" });
-    } else if (provider === "google.com") {
-      res.json({ exists: true, provider: "google" });
-    } else {
-      res.json({ exists: true, provider });
-    }
+    const primaryProvider = providers.includes("google.com") ? "google" : hasPassword ? "password" : providers[0];
+
+    res.json({
+      exists: true,
+      provider: primaryProvider,
+      hasPassword,
+    });
   } catch (err) {
     res.json({ exists: false });
   }
 });
+
 
 // ✅ Allow Google users to set a password
 router.post("/create-password", verifyFirebaseToken, async (req, res) => {
