@@ -28,7 +28,6 @@ router.post("/check-email", async (req, res) => {
   }
 });
 
-
 // ✅ Allow Google users to set a password
 router.post("/create-password", verifyFirebaseToken, async (req, res) => {
   const { newPassword } = req.body;
@@ -49,7 +48,6 @@ router.post("/create-password", verifyFirebaseToken, async (req, res) => {
 
     res.json({ message: "Password created successfully." });
   } catch (err) {
-    console.error("Create password error:", err);
     res.status(500).json({ message: "Failed to create password." });
   }
 });
@@ -63,13 +61,9 @@ router.post("/send-otp", async (req, res) => {
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
 
   try {
-    // Remove old OTPs for the email
     await Otp.findOneAndDelete({ email });
-
-    // Save new OTP
     await Otp.create({ email, otp, expiresAt });
 
-    // Send email
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -87,8 +81,23 @@ router.post("/send-otp", async (req, res) => {
 
     res.json({ message: "OTP sent" });
   } catch (err) {
-    console.error("OTP send error:", err);
     res.status(500).json({ message: "Failed to send OTP" });
+  }
+});
+
+router.post("/resend-otp", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Optional: rate limit by IP/email/session
+    const otp = generateOtp(); // Your logic
+    await saveOtpToDB(email, otp); // Update DB or memory
+    await sendOtpEmail(email, otp); // Your email sending logic
+
+    res.status(200).json({ message: "OTP sent" });
+  } catch (err) {
+    console.error("Failed to resend OTP:", err);
+    res.status(500).json({ message: "Could not resend OTP" });
   }
 });
 
@@ -108,7 +117,6 @@ router.post("/verify-otp", async (req, res) => {
     await Otp.deleteOne({ email });
     res.json({ message: "OTP verified" });
   } catch (err) {
-    console.error("OTP verify error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
